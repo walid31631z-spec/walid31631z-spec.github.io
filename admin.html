@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>sap31</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#fff;--fg:#111;--mut:#666;--card:#f4f4f4;--bd:#ddd;--ac:#111;--acfg:#fff;--bad:#c0392b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111;--fg:#f2f2f2;--mut:#999;--card:#1c1c1c;--bd:#333;--ac:#f2f2f2;--acfg:#111;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111;--fg:#f2f2f2;--mut:#999;--card:#1c1c1c;--bd:#333;--ac:#f2f2f2;--acfg:#111;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--bd);position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:5}
+.logo{font-weight:800;font-size:24px;letter-spacing:-1px;color:var(--fg);text-decoration:none}
+main{max-width:900px;margin:0 auto;padding:16px}
+button,.btn{font:inherit;background:var(--ac);color:var(--acfg);border:0;border-radius:10px;padding:10px 16px;cursor:pointer;text-decoration:none;display:inline-block;text-align:center}
+button.alt,.btn.alt{background:var(--card);color:var(--fg);border:1px solid var(--bd)}
+button.del{background:var(--bad);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.card{background:var(--card);border-radius:12px;overflow:hidden;cursor:pointer}
+.ph{aspect-ratio:1;background:var(--bd);display:flex;align-items:center;justify-content:center;font-size:40px}
+.card img,.ph img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.card .i{padding:10px}
+.mut{color:var(--mut);font-size:14px}
+.tag{color:var(--bad);font-weight:600;font-size:13px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sizes{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.sz{background:var(--card);color:var(--fg);border:1px solid var(--bd);min-width:56px}
+.sz.on{background:var(--ac);color:var(--acfg)}
+.sz small{display:block;font-size:11px;opacity:.8}
+.pics{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory}
+.pics img{width:85%;max-width:420px;aspect-ratio:1;object-fit:cover;border-radius:12px;scroll-snap-align:start;flex:none}
+.line{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--bd)}
+.line img,.line .ph{width:56px;height:56px;aspect-ratio:1;border-radius:8px;object-fit:cover;font-size:22px;flex:none}
+.line .g{flex:1}
+input,textarea{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px;width:100%}
+.f{margin:10px 0}.f label{display:block;font-size:14px;color:var(--mut);margin-bottom:4px}
+.sr{display:flex;gap:6px;margin:6px 0}.sr input{width:50%}
+.thumbs{display:flex;gap:6px;flex-wrap:wrap}.thumbs img{width:64px;height:64px;object-fit:cover;border-radius:8px}
+.bar{position:sticky;bottom:0;background:var(--bg);padding:10px 0;border-top:1px solid var(--bd);margin-top:12px}
+h2{margin:8px 0}
+</style></head>
+<body>
+<header><a class="logo" href="#">sap31</a><span id="hr"></span></header>
+<main id="app"></main>
+<script id="data" type="application/json">{"products":[{"id":"p1","name":"Veste coupe-vent noire","price":120,"desc":"Veste noire à capuche, coupe-vent, sans marque.","imgs":[],"sizes":{"S":3,"M":5,"L":4,"XL":2}},{"id":"pmwcq158q","name":"ww","price":0,"desc":"","imgs":[],"sizes":{"S":0,"M":0,"L":0,"XL":0}}]}</script>
+<script>
+const TPL="<!doctype html>\n"+document.documentElement.outerHTML;
+(function(){
+const SNAP="https://snapchat.com/t/V0NPMYNp";
+const isAdmin=()=>location.hash==="#admin"||/\/admin(\.html)?$/.test(location.pathname);let S=JSON.parse(document.getElementById("data").textContent);const loadDraft=()=>{try{if(isAdmin()){const d=localStorage.getItem("sap31draft");if(d)S=JSON.parse(d)}}catch(e){}};loadDraft();
+const $=s=>document.querySelector(s);
+const esc=t=>String(t==null?"":t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const eur=n=>Number(n).toLocaleString("fr-FR",{maximumFractionDigits:2})+" €";
+const P=id=>S.products.find(p=>p.id===id);
+const tot=p=>Object.values(p.sizes||{}).reduce((a,b)=>a+(+b||0),0);
+let cart=[];try{cart=JSON.parse(localStorage.getItem("sap31cart")||"[]")}catch(e){}
+const save=()=>{try{localStorage.setItem("sap31cart",JSON.stringify(cart))}catch(e){}};
+let ui={cart:false,sel:null,sz:null},owner=true,ed=null,dirty=0,msg="";
+const pic=(p,c)=>p.imgs&&p.imgs[0]?'<img src="'+p.imgs[0]+'" alt="">':'<div class="ph">📷</div>';
+
+function cleanCart(){cart=cart.filter(l=>{const p=P(l.id);if(!p)return false;l.q=Math.min(l.q,+p.sizes[l.sz]||0);return l.q>0});save()}
+function count(){return cart.reduce((a,l)=>a+l.q,0)}
+
+function shop(){
+  if(ui.cart)return cartV();
+  if(ui.sel)return detail(P(ui.sel));
+  if(!S.products.length)return '<p class="mut">Le catalogue est vide pour le moment.</p>';
+  return '<div class="grid">'+S.products.map(p=>'<div class="card" data-act="open" data-id="'+p.id+'">'+pic(p)+'<div class="i"><b>'+esc(p.name)+'</b><div>'+eur(p.price)+'</div>'+(tot(p)?'':'<div class="tag">Épuisé</div>')+'</div></div>').join("")+'</div>';
+}
+function detail(p){
+  if(!p)return "";
+  const sz=Object.keys(p.sizes);
+  return '<button class="alt" data-act="back">← Catalogue</button><h2>'+esc(p.name)+'</h2>'
+  +(p.imgs.length?'<div class="pics">'+p.imgs.map(s=>'<img src="'+s+'" alt="">').join("")+'</div>':'<div class="ph" style="border-radius:12px">📷</div>')
+  +'<p><b>'+eur(p.price)+'</b></p><p>'+esc(p.desc).replace(/\n/g,"<br>")+'</p><b>Taille</b><div class="sizes">'
+  +sz.map(k=>{const n=+p.sizes[k]||0;return '<button class="sz'+(ui.sz===k?' on':'')+'" data-act="sz" data-sz="'+esc(k)+'"'+(n?'':' disabled')+'>'+esc(k)+'<small>'+(n?(n<=3?'reste '+n:'dispo'):'épuisé')+'</small></button>'}).join("")
+  +'</div><button data-act="add" data-id="'+p.id+'"'+(ui.sz?'':' disabled')+'>Ajouter au panier</button>'+(ui.sz?'':' <span class="mut">Choisis une taille</span>');
+}
+function cartV(){
+  cleanCart();
+  let h='<button class="alt" data-act="back">← Catalogue</button><h2>Mon panier</h2>';
+  if(!cart.length)return h+'<p class="mut">Ton panier est vide.</p>';
+  let t=0;
+  h+=cart.map((l,i)=>{const p=P(l.id);t+=p.price*l.q;return '<div class="line">'+pic(p)+'<div class="g"><b>'+esc(p.name)+'</b><div class="mut">Taille '+esc(l.sz)+' · '+eur(p.price)+'</div></div><button class="alt" data-act="dec" data-i="'+i+'">−</button><b>'+l.q+'</b><button class="alt" data-act="inc" data-i="'+i+'">+</button></div>'}).join("");
+  return h+'<p style="font-size:20px"><b>Total : '+eur(t)+'</b></p><a class="btn" data-act="pay" href="'+SNAP+'" target="_blank" rel="noopener">Payer sur Snap</a><p class="mut">Le bouton te redirige vers Snapchat pour finaliser. Ton récapitulatif de commande est copié pour le coller dans la discussion.</p>';
+}
+function summary(){let t=0;const L=cart.map(l=>{const p=P(l.id);t+=p.price*l.q;return l.q+"× "+p.name+" (taille "+l.sz+") — "+eur(p.price*l.q)});return "Commande sap31\n"+L.join("\n")+"\nTotal : "+eur(t)}
+
+function admin(){
+  if(!owner)return '<h2>Espace admin</h2><p class="mut">Accès réservé au propriétaire du site. Ouvre ce lien depuis ton compte Claude.</p>';
+  if(ed)return editor();
+  return '<h2>Admin sap31</h2><p class="mut">Après tes changements, appuie sur Publier (en bas).</p><div class="row"><button data-act="new">+ Nouvel article</button><a class="btn alt" href="./">Voir le site client</a></div>'
+  +S.products.map(p=>'<div class="line">'+pic(p)+'<div class="g"><b>'+esc(p.name)+'</b><div class="mut">'+eur(p.price)+' · '+Object.keys(p.sizes).map(k=>esc(k)+':'+(+p.sizes[k]||0)).join(" ")+'</div></div><button class="alt" data-act="edit" data-id="'+p.id+'">Modifier</button><button class="del" data-act="del" data-id="'+p.id+'">'+(ui.del===p.id?'Confirmer ?':'✕')+'</button></div>').join("")
+  +'<div class="bar"><div class="row"><button data-act="pub">Publier</button><button class="alt" data-act="dl">Télécharger</button><button class="alt" data-act="cp">Copier le code</button></div><p class="mut">'+(dirty?dirty+' modification(s) à publier. ':'')+esc(msg)+'</p>'+tokUI()+'</div>';
+}
+function editor(){
+  return '<h2>'+(ed.id?'Modifier':'Nouvel article')+'</h2>'
+  +'<div class="f"><label>Nom'+(ed.err?' <span class="tag">obligatoire</span>':'')+'</label><input data-f="name" value="'+esc(ed.name)+'"></div>'
+  +'<div class="f"><label>Prix (€)</label><input data-f="price" type="number" step="0.01" inputmode="decimal" value="'+esc(ed.price)+'"></div>'
+  +'<div class="f"><label>Description</label><textarea data-f="desc" rows="3">'+esc(ed.desc)+'</textarea></div>'
+  +'<div class="f"><label>Photos</label><div class="thumbs">'+ed.imgs.map((s,i)=>'<span><img src="'+s+'" alt=""><br><button class="alt" data-act="rmimg" data-i="'+i+'">✕</button></span>').join("")+'</div><input type="file" accept="image/*" multiple data-f="files"></div>'
+  +'<div class="f"><label>Tailles et quantité restante</label>'+ed.sizes.map((r,i)=>'<div class="sr"><input data-f="sn" data-i="'+i+'" value="'+esc(r[0])+'" placeholder="Taille"><input data-f="sq" data-i="'+i+'" type="number" min="0" inputmode="numeric" value="'+esc(r[1])+'" placeholder="Stock"><button class="alt" data-act="rmsz" data-i="'+i+'">✕</button></div>').join("")+'<button class="alt" data-act="addsz">+ Taille</button></div>'
+  +'<div class="bar row"><button data-act="ok">Valider</button><button class="alt" data-act="cancel">Annuler</button></div>';
+}
+
+function render(){
+  const a=isAdmin();if(a&&dirty){try{localStorage.setItem("sap31draft",JSON.stringify(S))}catch(e){}}
+  $("#hr").innerHTML=a?'':'<button class="alt" data-act="cart">🛒 '+count()+'</button>';
+  $("#app").innerHTML=a?admin():shop();
+}
+
+function compress(f){return new Promise(res=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{const m=700,r=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*r);c.height=Math.round(im.height*r);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL("image/jpeg",.78))};im.onerror=()=>res(null);im.src=u})}
+
+function build(){return TPL.replace(/(<script id="data" type="application\/json">)[\s\S]*?(<\/script>)/,(m,a,b)=>a+JSON.stringify(S).replace(/</g,"\\u003c")+b)}
+const REPO="walid31631z-spec/walid31631z-spec.github.io";
+const tok=()=>{try{return localStorage.getItem("sap31tok")||""}catch(e){return ""}};
+function tokUI(){return tok()?'<p class="mut">GitHub : connecté ✓ <button class="alt" data-act="tokdel">Changer le jeton</button></p>':'<div class="f"><label>Jeton GitHub (à ajouter une seule fois)</label><input type="password" data-f="tok" placeholder="github_pat_…" autocapitalize="off" autocorrect="off"><p><button class="alt" data-act="toksave">Enregistrer le jeton</button></p></div>'}
+async function sync(){
+  if(!isAdmin()||!tok())return;
+  try{if(localStorage.getItem("sap31draft"))return}catch(e){}
+  try{
+    const r=await fetch("https://api.github.com/repos/"+REPO+"/contents/index.html?ref=main",{headers:{Authorization:"Bearer "+tok(),Accept:"application/vnd.github.raw+json"}});
+    if(!r.ok)return;
+    const m=(await r.text()).match(/<script id="data" type="application\/json">([\s\S]*?)<\/script>/);
+    if(m){S=JSON.parse(m[1]);render()}
+  }catch(e){}
+}
+async function publish(){
+  const t=tok();if(!t){msg="Ajoute d’abord ton jeton GitHub (en bas).";render();return}
+  msg="Publication…";render();
+  try{
+    const h={Authorization:"Bearer "+t,Accept:"application/vnd.github+json"},u="https://api.github.com/repos/"+REPO+"/contents/index.html";
+    const g=await fetch(u+"?ref=main",{headers:h});if(!g.ok)throw new Error("get "+g.status);
+    const sha=(await g.json()).sha;
+    const by=new TextEncoder().encode(build());let bin="";for(let i=0;i<by.length;i+=8192)bin+=String.fromCharCode.apply(null,by.subarray(i,i+8192));
+    const r=await fetch(u,{method:"PUT",headers:h,body:JSON.stringify({message:"Mise à jour sap31",content:btoa(bin),sha:sha,branch:"main"})});
+    if(!r.ok)throw new Error("put "+r.status);
+    try{localStorage.removeItem("sap31draft")}catch(e){}
+    dirty=0;msg="Publié ✓ Les clients le verront d’ici 1 à 10 minutes."
+  }catch(e){msg=/ 40[13]/.test(e.message)?"Jeton refusé : vérifie qu’il a le droit Contents en écriture.":"Échec de la publication ("+e.message+"). Utilise Télécharger."}
+  render();
+}
+function download(){try{const b=new Blob([build()],{type:"text/html"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="index.html";document.body.appendChild(a);a.click();a.remove();msg="Fichier téléchargé. Remplace-le sur GitHub."}catch(e){msg="Téléchargement impossible : utilise Copier le code"}render()}
+async function copyCode(){try{await navigator.clipboard.writeText(build());msg="Code copié."}catch(e){msg="Copie impossible : utilise Télécharger"}render()}
+
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-act]");if(!t)return;
+  const act=t.dataset.act,id=t.dataset.id,i=+t.dataset.i;if(act!=="del")ui.del=null;
+  if(act==="pay"){try{navigator.clipboard.writeText(summary())}catch(x){}return}
+  if(act==="cart"){ui={cart:true,sel:null,sz:null}}
+  else if(act==="back"){ui={cart:false,sel:null,sz:null}}
+  else if(act==="open"){ui={cart:false,sel:id,sz:null}}
+  else if(act==="sz"){ui.sz=t.dataset.sz}
+  else if(act==="add"){const p=P(id),l=cart.find(x=>x.id===id&&x.sz===ui.sz);if(l){l.q=Math.min(l.q+1,+p.sizes[ui.sz]||0)}else cart.push({id,sz:ui.sz,q:1});save();ui={cart:true,sel:null,sz:null}}
+  else if(act==="inc"){const l=cart[i],p=P(l.id);l.q=Math.min(l.q+1,+p.sizes[l.sz]||0);save()}
+  else if(act==="dec"){cart[i].q--;cart=cart.filter(l=>l.q>0);save()}
+  else if(act==="new"){ed={id:null,name:"",price:"",desc:"",imgs:[],sizes:[["S",0],["M",0],["L",0],["XL",0]]}}
+  else if(act==="edit"){const p=P(id);ed={id:p.id,name:p.name,price:p.price,desc:p.desc,imgs:p.imgs.slice(),sizes:Object.entries(p.sizes)}}
+  else if(act==="del"){if(ui.del===id){S.products=S.products.filter(p=>p.id!==id);dirty++;ui.del=null}else{ui.del=id}}
+  else if(act==="addsz"){ed.sizes.push(["",0])}
+  else if(act==="rmsz"){ed.sizes.splice(i,1)}
+  else if(act==="rmimg"){ed.imgs.splice(i,1)}
+  else if(act==="cancel"){ed=null}
+  else if(act==="ok"){
+    if(!ed.name.trim()){ed.err=1;render();return}
+    const sz={};ed.sizes.forEach(r=>{const k=String(r[0]).trim();if(k)sz[k]=Math.max(0,parseInt(r[1])||0)});
+    const o={id:ed.id||"p"+Date.now().toString(36),name:ed.name.trim(),price:parseFloat(ed.price)||0,desc:ed.desc,imgs:ed.imgs,sizes:sz};
+    const j=S.products.findIndex(p=>p.id===o.id);if(j<0)S.products.push(o);else S.products[j]=o;
+    ed=null;dirty++;msg="";
+  }
+  else if(act==="pub"){publish();return}else if(act==="toksave"){const v=($('[data-f="tok"]')||{}).value;if(v&&v.trim()){try{localStorage.setItem("sap31tok",v.trim());msg="Jeton enregistré.";sync()}catch(x){msg="Impossible d’enregistrer le jeton."}}}else if(act==="tokdel"){try{localStorage.removeItem("sap31tok")}catch(x){}msg=""}else if(act==="dl"){download();return}else if(act==="cp"){copyCode();return}
+  render();
+});
+document.addEventListener("input",e=>{
+  const f=e.target.dataset.f;if(!f||!ed)return;const i=+e.target.dataset.i;
+  if(f==="name"||f==="price"||f==="desc")ed[f]=e.target.value;
+  else if(f==="sn")ed.sizes[i][0]=e.target.value;
+  else if(f==="sq")ed.sizes[i][1]=e.target.value;
+});
+document.addEventListener("change",async e=>{
+  if(e.target.dataset.f!=="files"||!ed)return;
+  for(const f of Array.from(e.target.files).slice(0,6)){const d=await compress(f);if(d&&ed.imgs.length<6)ed.imgs.push(d)}
+  render();
+});
+window.addEventListener("hashchange",()=>{loadDraft();ui={cart:false,sel:null,sz:null};render();sync()});
+render();
+sync();
+})();
+</script></body></html>
