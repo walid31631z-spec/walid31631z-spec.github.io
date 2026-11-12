@@ -44,12 +44,12 @@ h2{margin:8px 0}
 <body>
 <header><a class="logo" href="#">sap31</a><span id="hr"></span></header>
 <main id="app"></main>
-<script id="data" type="application/json">{"products":[]}</script>
+<script id="data" type="application/json">{"products":[{"id":"p1","name":"Veste coupe-vent noire","price":120,"desc":"Veste noire à capuche, coupe-vent, sans marque.","imgs":[],"sizes":{"S":3,"M":5,"L":4,"XL":2}},{"id":"pmwcq158q","name":"ww","price":0,"desc":"","imgs":[],"sizes":{"S":0,"M":0,"L":0,"XL":0}}]}</script>
 <script>
 const TPL="<!doctype html>\n"+document.documentElement.outerHTML;
 (function(){
 const SNAP="https://snapchat.com/t/V0NPMYNp";
-let S=JSON.parse(document.getElementById("data").textContent);const loadDraft=()=>{try{if(location.hash==="#admin"){const d=localStorage.getItem("sap31draft");if(d)S=JSON.parse(d)}}catch(e){}};loadDraft();
+const isAdmin=()=>location.hash==="#admin"||/\/admin(\.html)?$/.test(location.pathname);let S=JSON.parse(document.getElementById("data").textContent);const loadDraft=()=>{try{if(isAdmin()){const d=localStorage.getItem("sap31draft");if(d)S=JSON.parse(d)}}catch(e){}};loadDraft();
 const $=s=>document.querySelector(s);
 const esc=t=>String(t==null?"":t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const eur=n=>Number(n).toLocaleString("fr-FR",{maximumFractionDigits:2})+" €";
@@ -91,9 +91,9 @@ function summary(){let t=0;const L=cart.map(l=>{const p=P(l.id);t+=p.price*l.q;r
 function admin(){
   if(!owner)return '<h2>Espace admin</h2><p class="mut">Accès réservé au propriétaire du site. Ouvre ce lien depuis ton compte Claude.</p>';
   if(ed)return editor();
-  return '<h2>Admin sap31</h2><p class="mut">Après tes changements : télécharge le site, puis remplace index.html sur GitHub.</p><div class="row"><button data-act="new">+ Nouvel article</button><a class="btn alt" href="#">Voir le site client</a></div>'
+  return '<h2>Admin sap31</h2><p class="mut">Après tes changements : appuie sur Publier (en bas), puis envoie le fichier sur GitHub.</p><div class="row"><button data-act="new">+ Nouvel article</button><a class="btn alt" href="./">Voir le site client</a></div>'
   +S.products.map(p=>'<div class="line">'+pic(p)+'<div class="g"><b>'+esc(p.name)+'</b><div class="mut">'+eur(p.price)+' · '+Object.keys(p.sizes).map(k=>esc(k)+':'+(+p.sizes[k]||0)).join(" ")+'</div></div><button class="alt" data-act="edit" data-id="'+p.id+'">Modifier</button><button class="del" data-act="del" data-id="'+p.id+'">'+(ui.del===p.id?'Confirmer ?':'✕')+'</button></div>').join("")
-  +'<div class="bar"><div class="row"><button data-act="dl">Télécharger le site</button><button class="alt" data-act="cp">Copier le code</button></div><p class="mut">'+(dirty?dirty+' modification(s) à publier. ':'')+esc(msg)+'</p></div>';
+  +'<div class="bar"><div class="row"><button data-act="dl">Publier</button><a class="btn alt" href="https://github.com/walid31631z-spec/walid31631z-spec.github.io/upload/main" target="_blank" rel="noopener">Envoyer sur GitHub</a><button class="alt" data-act="cp">Copier le code</button></div><p class="mut">'+(dirty?dirty+' modification(s) à publier. ':'')+esc(msg)+'</p>'+'</div>';
 }
 function editor(){
   return '<h2>'+(ed.id?'Modifier':'Nouvel article')+'</h2>'
@@ -106,7 +106,7 @@ function editor(){
 }
 
 function render(){
-  const a=location.hash==="#admin";if(a&&dirty){try{localStorage.setItem("sap31draft",JSON.stringify(S))}catch(e){}}
+  const a=isAdmin();if(a&&dirty){try{localStorage.setItem("sap31draft",JSON.stringify(S))}catch(e){}}
   $("#hr").innerHTML=a?'':'<button class="alt" data-act="cart">🛒 '+count()+'</button>';
   $("#app").innerHTML=a?admin():shop();
 }
@@ -114,7 +114,35 @@ function render(){
 function compress(f){return new Promise(res=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{const m=700,r=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*r);c.height=Math.round(im.height*r);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL("image/jpeg",.78))};im.onerror=()=>res(null);im.src=u})}
 
 function build(){return TPL.replace(/(<script id="data" type="application\/json">)[\s\S]*?(<\/script>)/,(m,a,b)=>a+JSON.stringify(S).replace(/</g,"\\u003c")+b)}
-function download(){try{const b=new Blob([build()],{type:"text/html"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="index.html";document.body.appendChild(a);a.click();a.remove();msg="Fichier téléchargé. Remplace-le sur GitHub."}catch(e){msg="Téléchargement impossible : utilise Copier le code"}render()}
+const REPO="walid31631z-spec/walid31631z-spec.github.io";
+const tok=()=>{try{return localStorage.getItem("sap31tok")||""}catch(e){return ""}};
+function tokUI(){return tok()?'<p class="mut">GitHub : connecté ✓ <button class="alt" data-act="tokdel">Changer le jeton</button></p>':'<div class="f"><label>Jeton GitHub (à ajouter une seule fois)</label><input type="password" data-f="tok" placeholder="github_pat_…" autocapitalize="off" autocorrect="off"><p><button class="alt" data-act="toksave">Enregistrer le jeton</button></p></div>'}
+async function sync(){
+  if(!isAdmin())return;
+  try{if(localStorage.getItem("sap31draft"))return}catch(e){}
+  try{
+    const r=await fetch("/index.html?v="+Date.now(),{cache:"no-store"});
+    if(!r.ok)return;
+    const m=(await r.text()).match(/<script id="data" type="application\/json">([\s\S]*?)<\/script>/);
+    if(m){S=JSON.parse(m[1]);render()}
+  }catch(e){}
+}
+async function publish(){
+  const t=tok();if(!t){msg="Ajoute d’abord ton jeton GitHub (en bas).";render();return}
+  msg="Publication…";render();
+  try{
+    const h={Authorization:"Bearer "+t,Accept:"application/vnd.github+json"},u="https://api.github.com/repos/"+REPO+"/contents/index.html";
+    const g=await fetch(u+"?ref=main",{headers:h});if(!g.ok)throw new Error("get "+g.status);
+    const sha=(await g.json()).sha;
+    const by=new TextEncoder().encode(build());let bin="";for(let i=0;i<by.length;i+=8192)bin+=String.fromCharCode.apply(null,by.subarray(i,i+8192));
+    const r=await fetch(u,{method:"PUT",headers:h,body:JSON.stringify({message:"Mise à jour sap31",content:btoa(bin),sha:sha,branch:"main"})});
+    if(!r.ok)throw new Error("put "+r.status);
+    try{localStorage.removeItem("sap31draft")}catch(e){}
+    dirty=0;msg="Publié ✓ Les clients le verront d’ici 1 à 10 minutes."
+  }catch(e){msg=/ 40[13]/.test(e.message)?"Jeton refusé : vérifie qu’il a le droit Contents en écriture.":"Échec de la publication ("+e.message+"). Utilise Télécharger."}
+  render();
+}
+function download(){try{const b=new Blob([build()],{type:"text/html"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="index.html";document.body.appendChild(a);a.click();a.remove();msg="Fichier index.html téléchargé. Appuie sur « Envoyer sur GitHub », choisis ce fichier, coche « Commit directly to the main branch » puis « Commit changes »."}catch(e){msg="Téléchargement impossible : utilise Copier le code"}render()}
 async function copyCode(){try{await navigator.clipboard.writeText(build());msg="Code copié."}catch(e){msg="Copie impossible : utilise Télécharger"}render()}
 
 document.addEventListener("click",e=>{
@@ -142,7 +170,7 @@ document.addEventListener("click",e=>{
     const j=S.products.findIndex(p=>p.id===o.id);if(j<0)S.products.push(o);else S.products[j]=o;
     ed=null;dirty++;msg="";
   }
-  else if(act==="dl"){download();return}else if(act==="cp"){copyCode();return}
+  else if(act==="pub"){publish();return}else if(act==="toksave"){const v=($('[data-f="tok"]')||{}).value;if(v&&v.trim()){try{localStorage.setItem("sap31tok",v.trim());msg="Jeton enregistré.";sync()}catch(x){msg="Impossible d’enregistrer le jeton."}}}else if(act==="tokdel"){try{localStorage.removeItem("sap31tok")}catch(x){}msg=""}else if(act==="dl"){download();return}else if(act==="cp"){copyCode();return}
   render();
 });
 document.addEventListener("input",e=>{
@@ -156,7 +184,8 @@ document.addEventListener("change",async e=>{
   for(const f of Array.from(e.target.files).slice(0,6)){const d=await compress(f);if(d&&ed.imgs.length<6)ed.imgs.push(d)}
   render();
 });
-window.addEventListener("hashchange",()=>{loadDraft();ui={cart:false,sel:null,sz:null};render()});
+window.addEventListener("hashchange",()=>{loadDraft();ui={cart:false,sel:null,sz:null};render();sync()});
 render();
+sync();
 })();
 </script></body></html>

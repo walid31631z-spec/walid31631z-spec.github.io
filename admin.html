@@ -91,9 +91,9 @@ function summary(){let t=0;const L=cart.map(l=>{const p=P(l.id);t+=p.price*l.q;r
 function admin(){
   if(!owner)return '<h2>Espace admin</h2><p class="mut">Accès réservé au propriétaire du site. Ouvre ce lien depuis ton compte Claude.</p>';
   if(ed)return editor();
-  return '<h2>Admin sap31</h2><p class="mut">Après tes changements, appuie sur Publier (en bas).</p><div class="row"><button data-act="new">+ Nouvel article</button><a class="btn alt" href="./">Voir le site client</a></div>'
+  return '<h2>Admin sap31</h2><p class="mut">Après tes changements : appuie sur Publier (en bas), puis envoie le fichier sur GitHub.</p><div class="row"><button data-act="new">+ Nouvel article</button><a class="btn alt" href="./">Voir le site client</a></div>'
   +S.products.map(p=>'<div class="line">'+pic(p)+'<div class="g"><b>'+esc(p.name)+'</b><div class="mut">'+eur(p.price)+' · '+Object.keys(p.sizes).map(k=>esc(k)+':'+(+p.sizes[k]||0)).join(" ")+'</div></div><button class="alt" data-act="edit" data-id="'+p.id+'">Modifier</button><button class="del" data-act="del" data-id="'+p.id+'">'+(ui.del===p.id?'Confirmer ?':'✕')+'</button></div>').join("")
-  +'<div class="bar"><div class="row"><button data-act="pub">Publier</button><button class="alt" data-act="dl">Télécharger</button><button class="alt" data-act="cp">Copier le code</button></div><p class="mut">'+(dirty?dirty+' modification(s) à publier. ':'')+esc(msg)+'</p>'+tokUI()+'</div>';
+  +'<div class="bar"><div class="row"><button data-act="dl">Publier</button><a class="btn alt" href="https://github.com/walid31631z-spec/walid31631z-spec.github.io/upload/main" target="_blank" rel="noopener">Envoyer sur GitHub</a><button class="alt" data-act="cp">Copier le code</button></div><p class="mut">'+(dirty?dirty+' modification(s) à publier. ':'')+esc(msg)+'</p>'+'</div>';
 }
 function editor(){
   return '<h2>'+(ed.id?'Modifier':'Nouvel article')+'</h2>'
@@ -118,10 +118,10 @@ const REPO="walid31631z-spec/walid31631z-spec.github.io";
 const tok=()=>{try{return localStorage.getItem("sap31tok")||""}catch(e){return ""}};
 function tokUI(){return tok()?'<p class="mut">GitHub : connecté ✓ <button class="alt" data-act="tokdel">Changer le jeton</button></p>':'<div class="f"><label>Jeton GitHub (à ajouter une seule fois)</label><input type="password" data-f="tok" placeholder="github_pat_…" autocapitalize="off" autocorrect="off"><p><button class="alt" data-act="toksave">Enregistrer le jeton</button></p></div>'}
 async function sync(){
-  if(!isAdmin()||!tok())return;
+  if(!isAdmin())return;
   try{if(localStorage.getItem("sap31draft"))return}catch(e){}
   try{
-    const r=await fetch("https://api.github.com/repos/"+REPO+"/contents/index.html?ref=main",{headers:{Authorization:"Bearer "+tok(),Accept:"application/vnd.github.raw+json"}});
+    const r=await fetch("/index.html?v="+Date.now(),{cache:"no-store"});
     if(!r.ok)return;
     const m=(await r.text()).match(/<script id="data" type="application\/json">([\s\S]*?)<\/script>/);
     if(m){S=JSON.parse(m[1]);render()}
@@ -142,7 +142,7 @@ async function publish(){
   }catch(e){msg=/ 40[13]/.test(e.message)?"Jeton refusé : vérifie qu’il a le droit Contents en écriture.":"Échec de la publication ("+e.message+"). Utilise Télécharger."}
   render();
 }
-function download(){try{const b=new Blob([build()],{type:"text/html"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="index.html";document.body.appendChild(a);a.click();a.remove();msg="Fichier téléchargé. Remplace-le sur GitHub."}catch(e){msg="Téléchargement impossible : utilise Copier le code"}render()}
+function download(){try{const b=new Blob([build()],{type:"text/html"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="index.html";document.body.appendChild(a);a.click();a.remove();msg="Fichier index.html téléchargé. Appuie sur « Envoyer sur GitHub », choisis ce fichier, coche « Commit directly to the main branch » puis « Commit changes »."}catch(e){msg="Téléchargement impossible : utilise Copier le code"}render()}
 async function copyCode(){try{await navigator.clipboard.writeText(build());msg="Code copié."}catch(e){msg="Copie impossible : utilise Télécharger"}render()}
 
 document.addEventListener("click",e=>{
